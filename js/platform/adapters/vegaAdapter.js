@@ -5,8 +5,9 @@ const BACK_KEY_CODES = [461, 10009, 27, 8];
 function postToNativeShell(message) {
   try {
     globalThis.ReactNativeWebView?.postMessage?.(JSON.stringify(message));
-  } catch (_) {
-    // The native bridge is absent when previewing the build in a plain browser; ignore.
+  } catch (error) {
+    // JSON.stringify or the native postMessage implementation itself threw; surface it.
+    console.warn("[vegaAdapter] postToNativeShell failed:", error);
   }
 }
 
