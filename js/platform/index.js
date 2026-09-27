@@ -1,11 +1,13 @@
 import { browserAdapter } from "./adapters/browserAdapter.js";
 import { webosAdapter } from "./adapters/webosAdapter.js";
 import { tizenAdapter } from "./adapters/tizenAdapter.js";
+import { vegaAdapter } from "./adapters/vegaAdapter.js";
 
 const ADAPTERS = {
   browser: browserAdapter,
   webos: webosAdapter,
-  tizen: tizenAdapter
+  tizen: tizenAdapter,
+  vega: vegaAdapter
 };
 
 function parseWebOsMajorVersion() {
@@ -79,6 +81,9 @@ function detectPlatformName() {
   ) {
     return "tizen";
   }
+  if (globalThis.ReactNativeWebView) {
+    return "vega";
+  }
   return "browser";
 }
 
@@ -119,6 +124,10 @@ export const Platform = {
 
   isBrowser() {
     return this.getName() === "browser";
+  },
+
+  isVega() {
+    return this.getName() === "vega";
   },
 
   exitApp() {
