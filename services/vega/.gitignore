@@ -11,3 +11,4 @@ node_modules
 buildinfo.json
 CMakeUserPresets.json
 npm-debug.log
+assets/www

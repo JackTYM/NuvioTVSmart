@@ -3,13 +3,13 @@ import { constants as fsConstants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
 import { readAppMetadata } from "./appMetadata.mjs";
-import { runReactNativeBuildKepler } from "./vegaCli.mjs";
+import { runReactNativeBuildVega } from "./vegaCli.mjs";
 
 const __dirname = path.dirname(fileURLToPath(import.meta.url));
 const rootDir = path.resolve(__dirname, "..");
 const distDir = path.join(rootDir, "dist");
 const vegaProjectDir = path.join(rootDir, "services", "vega");
-const vegaWebAssetsDir = path.join(vegaProjectDir, "assets", "raw", "www");
+const vegaWebAssetsDir = path.join(vegaProjectDir, "assets", "www");
 
 async function pathExists(filePath) {
   try {
@@ -32,7 +32,7 @@ async function assertVegaProjectReady() {
   if (!(await pathExists(path.join(vegaProjectDir, "manifest.toml")))) {
     throw new Error(
       `No Vega project found at ${vegaProjectDir}. Generate it first with the Vega SDK CLI ` +
-        '("vega project generate --template hello-world --name NuvioVega ' +
+        '("vega project generate --template vegaWebview --name NuvioVega ' +
         '--packageId space.nuvio.vega --outputDir services/vega"), wire up the WebView entry ' +
         "point, then re-run this script."
     );
@@ -69,10 +69,11 @@ async function syncVegaVersion() {
 
   const manifestPath = path.join(vegaProjectDir, "manifest.toml");
   const manifest = await readFile(manifestPath, "utf8");
-  const patchedManifest = manifest.replace(/^version = ".*"$/m, `version = "${version}"`);
-  if (patchedManifest === manifest) {
+  const versionLinePattern = /^version = ".*"$/m;
+  if (!versionLinePattern.test(manifest)) {
     throw new Error(`Could not find a "version = ..." line to update in ${manifestPath}.`);
   }
+  const patchedManifest = manifest.replace(versionLinePattern, `version = "${version}"`);
   await writeFile(manifestPath, patchedManifest, "utf8");
 
   const packageJsonPath = path.join(vegaProjectDir, "package.json");
@@ -90,7 +91,7 @@ async function packageVega() {
   await syncVegaVersion();
 
   console.log("building Vega package (this invokes the Vega SDK's own build tool)...");
-  runReactNativeBuildKepler("Release", { cwd: vegaProjectDir });
+  runReactNativeBuildVega("Release", { cwd: vegaProjectDir });
 
   console.log(
     `\nVega packaging finished. Look for the .vpkg under ${path.join(vegaProjectDir, "build")}.`

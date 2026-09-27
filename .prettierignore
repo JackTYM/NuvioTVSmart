@@ -4,6 +4,7 @@ build
 assets
 res
 services/**/runtime
+services/vega/buildinfo.json
 *.ipk
 *.wgt
 

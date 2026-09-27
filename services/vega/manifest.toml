@@ -2,7 +2,7 @@ schema-version = 1
 
 [package]
 title = "Basic UI React Native Application for project nuviovega"
-version = "0.1.0"
+version = "1.2.0"
 id = "space.nuvio.vega"
 
 [os.version]
@@ -12,6 +12,14 @@ target = "1.2"
 [needs]
 [[needs.module]]
 id = "/com.amazon.vega.os@IVega_1_2"
+
+[[needs.module]]
+id = "/com.amazon.kepler.keplerscript_4@IKeplerScript_0"
+
+[[needs.module]]
+id = "/com.amazon.kepler.webview_4@IWebview_4"
+
+
 
 [components]
 [[components.interactive]]
