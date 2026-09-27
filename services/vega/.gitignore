@@ -8,5 +8,6 @@
 dist
 build
 node_modules
+buildinfo.json
 CMakeUserPresets.json
 npm-debug.log
