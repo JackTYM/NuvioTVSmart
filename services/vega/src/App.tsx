@@ -17,10 +17,14 @@ import {
 
 const INJECT_BACK_KEY_JS = `
 (function () {
-  var evt = new KeyboardEvent("keydown", { bubbles: true, cancelable: true });
-  Object.defineProperty(evt, "keyCode", { get: function () { return 461; } });
-  Object.defineProperty(evt, "which", { get: function () { return 461; } });
-  document.dispatchEvent(evt);
+  try {
+    var evt = new KeyboardEvent("keydown", { bubbles: true, cancelable: true });
+    Object.defineProperty(evt, "keyCode", { get: function () { return 461; } });
+    Object.defineProperty(evt, "which", { get: function () { return 461; } });
+    document.dispatchEvent(evt);
+  } catch (error) {
+    console.error("[vega back-key injection] failed:", error);
+  }
 })();
 true;
 `;
@@ -36,7 +40,11 @@ export const App = () => {
     const subscription = BackHandler.addEventListener(
       'hardwareBackPress',
       () => {
-        webRef.current?.injectJavaScript(INJECT_BACK_KEY_JS);
+        if (webRef.current) {
+          webRef.current.injectJavaScript(INJECT_BACK_KEY_JS);
+          return true;
+        }
+        BackHandler.exitApp();
         return true;
       },
     );
@@ -83,15 +91,23 @@ export const App = () => {
           console.error(`[onSslError]: (${code}: ${url}) ${description}`);
         }}
         onMessage={(event: WebViewMessageEvent) => {
-          let payload;
+          let payload: unknown;
           try {
             payload = JSON.parse(event.nativeEvent.data);
-          } catch (_error) {
+          } catch (error) {
+            console.error(
+              `[onMessage]: failed to parse bridge message: ${error}`,
+            );
             return;
           }
-          if (payload?.type === 'exitApp') {
+          const type = (payload as {type?: unknown})?.type;
+          if (type === 'exitApp') {
             BackHandler.exitApp();
+            return;
           }
+          console.info(
+            `[onMessage]: unhandled bridge message type: ${String(type)}`,
+          );
         }}
       />
     </View>
