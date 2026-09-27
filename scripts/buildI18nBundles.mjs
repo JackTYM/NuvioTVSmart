@@ -69,6 +69,13 @@ export async function buildI18nBundles({ rootDir, distDir }) {
       throw new Error(`Invalid translation values for locale ${locale}`);
     }
     await writeFile(path.join(outputDir, `${locale}.json`), JSON.stringify(messages), "utf8");
+
+    // Additionally emit a script-tag-loadable variant: some WebView hosts (e.g. Vega/Fire TV)
+    // give file:// pages an opaque origin that blocks script-initiated fetch()/XHR to sibling
+    // local files, but <script src="..."> tag loading is unaffected. This lets the runtime try
+    // script-tag loading first and fall back to XHR where that already works (Tizen/webOS).
+    const scriptTagSource = `(function () {\n  var bundles = (globalThis.__NUVIO_I18N_BUNDLES__ = globalThis.__NUVIO_I18N_BUNDLES__ || {});\n  bundles[${JSON.stringify(locale)}] = ${JSON.stringify(messages)};\n})();\n`;
+    await writeFile(path.join(outputDir, `${locale}.js`), scriptTagSource, "utf8");
   }
 
   // Packages use the compiled dictionaries. Keep the base English XML as a

@@ -593,7 +593,56 @@ function loadJsonFileXhr(url) {
   });
 }
 
+function isValidMessagesObject(messages) {
+  return Boolean(
+    messages &&
+    typeof messages === "object" &&
+    !Array.isArray(messages) &&
+    !Object.values(messages).some((message) => typeof message !== "string")
+  );
+}
+
+function loadJsonFileScriptTag(locale, url) {
+  return new Promise((resolve, reject) => {
+    const script = document.createElement("script");
+    script.src = url;
+    script.async = true;
+    const cleanup = () => script.remove();
+    script.onload = () => {
+      const bundles = globalThis.__NUVIO_I18N_BUNDLES__;
+      const messages = bundles ? bundles[locale] : undefined;
+      if (bundles) {
+        delete bundles[locale];
+      }
+      cleanup();
+      if (isValidMessagesObject(messages)) {
+        resolve(messages);
+      } else {
+        reject(new Error(`Invalid translation bundle from script tag: ${url}`));
+      }
+    };
+    script.onerror = (error) => {
+      cleanup();
+      reject(error);
+    };
+    document.head.appendChild(script);
+  });
+}
+
 async function loadJsonFile(relativePath) {
+  const localeMatch = relativePath.match(/^i18n\/([^/]+)\.json$/);
+  if (localeMatch) {
+    const [, locale] = localeMatch;
+    const scriptCandidates = [`res/i18n/${locale}.js`, `dist/res/i18n/${locale}.js`];
+    for (const candidate of scriptCandidates) {
+      try {
+        return await loadJsonFileScriptTag(locale, candidate);
+      } catch (_) {
+        // Try the next script-tag candidate, then fall back to XHR below.
+      }
+    }
+  }
+
   const candidates = [`res/${relativePath}`, `dist/res/${relativePath}`];
   for (const candidate of candidates) {
     try {
