@@ -607,7 +607,14 @@ async function loadJsonFile(relativePath) {
 
 async function loadBaseMessages() {
   if (!baseMessagesPromise) {
-    baseMessagesPromise = loadXmlFile("values/strings.xml");
+    baseMessagesPromise = (async () => {
+      try {
+        return await loadXmlFile("values/strings.xml");
+      } catch (error) {
+        console.warn(`Unable to load base translation strings: ${error}`);
+        return {};
+      }
+    })();
   }
   return baseMessagesPromise;
 }
