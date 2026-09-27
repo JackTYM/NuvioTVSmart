@@ -482,8 +482,22 @@ export function audioLabel(index) {
   return buildIndexedLabel(t("audio_dialog_title", {}, "Audio"), index);
 }
 
+function decodeHtmlEntities(value) {
+  if (!value || typeof globalThis.document?.createElement !== "function") {
+    return value;
+  }
+  // Some addons return metadata (cast names, titles, descriptions) with HTML
+  // entities already encoded (e.g. "Jack O&#39;Connell"). escapeHtml() would
+  // then re-encode the "&", double-escaping the text on render. Decode any
+  // entities the source already applied before we use the text, so it only
+  // ever gets encoded once.
+  const textarea = globalThis.document.createElement("textarea");
+  textarea.innerHTML = value;
+  return textarea.value;
+}
+
 export function cleanDisplayText(value) {
-  return String(value ?? "")
+  return decodeHtmlEntities(String(value ?? ""))
     .replace(/\s+/g, " ")
     .trim();
 }
