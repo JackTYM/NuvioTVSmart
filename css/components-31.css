@@ -208,6 +208,10 @@
   filter: none;
 }
 
+.player-control-btn.is-primary.focused .player-control-icon:not(.player-control-icon-mask) {
+  filter: none;
+}
+
 .player-control-btn.focused .player-control-icon-mask {
   background-color: #000000;
 }
