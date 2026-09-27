@@ -18,6 +18,7 @@
     "lint:runtime": "eslint \"js/**/*.js\" --quiet --rule \"no-unused-vars: off\"",
     "package:tizen": "npm run build && node ./scripts/package-tizen.mjs",
     "package:tizen:store": "npm run build && node ./scripts/package-tizen.mjs --store",
+    "package:vega": "npm run build && node ./scripts/package-vega.mjs",
     "package:webos": "npm run build && node ./scripts/package-webos.mjs",
     "format": "prettier --write .",
     "format:check": "prettier --check .",
