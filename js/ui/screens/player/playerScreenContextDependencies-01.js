@@ -1,4 +1,5 @@
 import { PlayerController } from "../../../core/player/playerController.js";
+import { Platform } from "../../../platform/index.js";
 
 import {
   audioTrackLabelConflictsWithCodec,
@@ -344,6 +345,7 @@ import { PAUSE_OVERLAY_DELAY_MS } from "./playerScreenHelpers-02-language-code-a
 
 export {
   PlayerController,
+  Platform,
   audioTrackLabelConflictsWithCodec,
   formatAudioCodecName,
   getAuthoritativeAudioCodecValue,
