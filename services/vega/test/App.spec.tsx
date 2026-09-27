@@ -62,6 +62,19 @@ describe('App', () => {
     );
   });
 
+  it("injects both a keydown and a matching keyup, so the web app's back-key debounce latch clears", () => {
+    // js/ui/navigation/focusEngine.js latches a "back" key identity on keydown
+    // and only clears it on a matching keyup (activeBackKeyIdentities). A
+    // keydown-only injection permanently blocks every back press after the
+    // first one, for the rest of the app session.
+    render(<App />);
+    const handler = mockAddEventListener.mock.calls[0][1];
+    handler();
+    const injectedScript = mockInjectJavaScript.mock.calls[0][0];
+    expect(injectedScript).toEqual(expect.stringContaining('"keydown"'));
+    expect(injectedScript).toEqual(expect.stringContaining('"keyup"'));
+  });
+
   it('exits the app when the page posts an exitApp message', () => {
     render(<App />);
     mockWebViewProps.onMessage?.({

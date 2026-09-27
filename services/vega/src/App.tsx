@@ -18,10 +18,18 @@ import {
 const INJECT_BACK_KEY_JS = `
 (function () {
   try {
-    var evt = new KeyboardEvent("keydown", { bubbles: true, cancelable: true });
-    Object.defineProperty(evt, "keyCode", { get: function () { return 461; } });
-    Object.defineProperty(evt, "which", { get: function () { return 461; } });
-    document.dispatchEvent(evt);
+    // The web app's own back-key handling (js/ui/navigation/focusEngine.js)
+    // latches a "back" key identity on keydown and only clears it on a
+    // matching keyup. Dispatching keydown alone would permanently block
+    // every back press after the first one for the rest of the session.
+    function dispatchBackKey(type) {
+      var evt = new KeyboardEvent(type, { bubbles: true, cancelable: true });
+      Object.defineProperty(evt, "keyCode", { get: function () { return 461; } });
+      Object.defineProperty(evt, "which", { get: function () { return 461; } });
+      document.dispatchEvent(evt);
+    }
+    dispatchBackKey("keydown");
+    dispatchBackKey("keyup");
   } catch (error) {
     console.error("[vega back-key injection] failed:", error);
   }
