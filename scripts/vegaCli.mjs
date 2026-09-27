@@ -5,6 +5,11 @@ export function runReactNativeBuildKepler(buildType, { cwd }) {
     cwd,
     stdio: "inherit"
   });
+  if (result.error) {
+    throw new Error(
+      `Failed to run react-native build-kepler --build-type ${buildType}: ${result.error.message}`
+    );
+  }
   if (result.status !== 0) {
     throw new Error(
       `react-native build-kepler --build-type ${buildType} exited with code ${result.status}`

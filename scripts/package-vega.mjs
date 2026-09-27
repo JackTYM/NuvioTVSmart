@@ -1,4 +1,4 @@
-import { access, cp, mkdir, readFile, rm, writeFile } from "node:fs/promises";
+import { access, cp, readFile, rm, writeFile } from "node:fs/promises";
 import { constants as fsConstants } from "node:fs";
 import path from "node:path";
 import { fileURLToPath } from "node:url";
@@ -21,7 +21,9 @@ async function pathExists(filePath) {
 }
 
 async function assertDistExists() {
-  if (!(await pathExists(path.join(distDir, "app.bundle.js")))) {
+  const hasBundle = await pathExists(path.join(distDir, "app.bundle.js"));
+  const hasIndexHtml = await pathExists(path.join(distDir, "index.html"));
+  if (!hasBundle || !hasIndexHtml) {
     throw new Error(`Build output not found at ${distDir}. Run "npm run build" first.`);
   }
 }
@@ -37,6 +39,9 @@ async function assertVegaProjectReady() {
   }
   if (!(await pathExists(path.join(vegaProjectDir, "node_modules")))) {
     throw new Error(`Run "npm install" inside ${vegaProjectDir} first.`);
+  }
+  if (!(await pathExists(path.join(vegaProjectDir, "package.json")))) {
+    throw new Error(`Expected ${vegaProjectDir} to contain a package.json but none was found.`);
   }
 }
 
@@ -55,7 +60,6 @@ async function injectPlatformFlag(indexHtmlPath) {
 
 async function stageWebAssets() {
   await rm(vegaWebAssetsDir, { recursive: true, force: true });
-  await mkdir(vegaWebAssetsDir, { recursive: true });
   await cp(distDir, vegaWebAssetsDir, { recursive: true });
   await injectPlatformFlag(path.join(vegaWebAssetsDir, "index.html"));
 }
@@ -65,11 +69,11 @@ async function syncVegaVersion() {
 
   const manifestPath = path.join(vegaProjectDir, "manifest.toml");
   const manifest = await readFile(manifestPath, "utf8");
-  await writeFile(
-    manifestPath,
-    manifest.replace(/^version = ".*"$/m, `version = "${version}"`),
-    "utf8"
-  );
+  const patchedManifest = manifest.replace(/^version = ".*"$/m, `version = "${version}"`);
+  if (patchedManifest === manifest) {
+    throw new Error(`Could not find a "version = ..." line to update in ${manifestPath}.`);
+  }
+  await writeFile(manifestPath, patchedManifest, "utf8");
 
   const packageJsonPath = path.join(vegaProjectDir, "package.json");
   const packageJson = JSON.parse(await readFile(packageJsonPath, "utf8"));
