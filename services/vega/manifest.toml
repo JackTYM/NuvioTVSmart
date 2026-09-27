@@ -26,7 +26,7 @@ id = "/com.amazon.kepler.webview_4@IWebview_4"
 id = "space.nuvio.vega.main"
 runtime-module = "/com.amazon.kepler.runtime.react_native_kepler_4@IReactNativeKepler_0"
 launch-type = "singleton"
-categories = ["com.amazon.category.main"]
+categories = ["com.amazon.category.main", "com.amazon.category.kepler.media"]
 
 [wants]
 # Web renderer service for rendering web content
@@ -79,3 +79,16 @@ id = "com.amazon.gipc.uuid.*"
 id = "com.amazon.gipc.uuid.*" 
 
 # You may add other services as needed
+
+# Our own VegaMediaControl handler (App.tsx) replaces the default media
+# control overlay (allowsDefaultMediaControl={false}) so we can wire hardware
+# remote / voice Play-Pause commands to the web app without depending on
+# Vega's own overlay UI.
+[[extras]]
+key = "interface.provider"
+component-id = "space.nuvio.vega.main"
+
+[extras.value.application]
+[[extras.value.application.interface]]
+interface_name = "com.amazon.kepler.media.IMediaPlaybackServer"
+command_options = ["Play", "Pause", "SkipForward", "SkipBackward"]

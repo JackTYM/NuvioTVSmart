@@ -31,9 +31,15 @@ jest.mock('@amazon-devices/webview', () => {
   };
 });
 
+const mockGetComponentInstance = jest.fn(() => ({}));
+const mockSetHandlerForComponent = jest.fn();
+
 jest.mock('@amazon-devices/react-native-kepler', () => ({
   usePreventHideSplashScreen: jest.fn(),
   useHideSplashScreenCallback: jest.fn(() => jest.fn()),
+  useKeplerAppStateManager: jest.fn(() => ({
+    getComponentInstance: mockGetComponentInstance,
+  })),
   StyleSheet: {create: (styles: unknown) => styles},
   View: 'View',
   BackHandler: {
@@ -41,6 +47,20 @@ jest.mock('@amazon-devices/react-native-kepler', () => ({
       mockAddEventListener(eventName, handler),
     exitApp: () => mockExitApp(),
   },
+}));
+
+jest.mock('@amazon-devices/kepler-media-controls', () => ({
+  Action: {},
+  RepeatMode: {},
+  MediaControlServerComponentAsync: {
+    getOrMakeServer: jest.fn(() => ({
+      setHandlerForComponent: mockSetHandlerForComponent,
+    })),
+  },
+}));
+
+jest.mock('@amazon-devices/kepler-media-types', () => ({
+  MediaId: class MediaId {},
 }));
 
 describe('App', () => {
@@ -81,5 +101,41 @@ describe('App', () => {
       nativeEvent: {data: JSON.stringify({type: 'exitApp'})},
     });
     expect(mockExitApp).toHaveBeenCalled();
+  });
+
+  it('registers a media control handler, replacing the broken default overlay', () => {
+    render(<App />);
+    expect(mockSetHandlerForComponent).toHaveBeenCalledTimes(1);
+    const [handler, componentInstance] =
+      mockSetHandlerForComponent.mock.calls[0];
+    expect(componentInstance).toBe(
+      mockGetComponentInstance.mock.results[0].value,
+    );
+    expect(typeof handler.handlePlay).toBe('function');
+    expect(typeof handler.handleGetSessionState).toBe('function');
+  });
+
+  it('injects the Play media key on a handlePlay request', async () => {
+    render(<App />);
+    const handler = mockSetHandlerForComponent.mock.calls[0][0];
+    await handler.handlePlay();
+    expect(mockInjectJavaScript).toHaveBeenCalledWith(
+      expect.stringContaining('415'),
+    );
+  });
+
+  it('injects the Pause media key on a handlePause request', async () => {
+    render(<App />);
+    const handler = mockSetHandlerForComponent.mock.calls[0][0];
+    await handler.handlePause();
+    expect(mockInjectJavaScript).toHaveBeenCalledWith(
+      expect.stringContaining('19'),
+    );
+  });
+
+  it('safely no-ops handleSetRating, which this app has no use for', async () => {
+    render(<App />);
+    const handler = mockSetHandlerForComponent.mock.calls[0][0];
+    await expect(handler.handleSetRating({}, 5)).resolves.toBeUndefined();
   });
 });
